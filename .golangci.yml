@@ -1,0 +1,39 @@
+# golangci-lint v2 configuration. Docs: https://golangci-lint.run/docs/configuration/file/
+# Run `golangci-lint linters` to see what is enabled, `golangci-lint run --fix` to auto-fix.
+version: "2"
+
+linters:
+  # standard = errcheck, govet, ineffassign, staticcheck, unused
+  default: standard
+  enable:
+    - bodyclose     # unclosed HTTP response bodies
+    - errorlint     # correct use of errors.Is / errors.As / %w
+    - gosec         # common security mistakes
+    - misspell      # spelling in comments and strings
+    - nolintlint    # every //nolint must name a linter and give a reason
+    - revive        # configurable style rules (golint successor)
+    - unconvert     # unnecessary type conversions
+    - usetesting    # prefer t.Context(), t.TempDir() etc. in tests
+
+  settings:
+    errcheck:
+      check-type-assertions: true
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - std-error-handling
+      - common-false-positives
+
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/org/repo
