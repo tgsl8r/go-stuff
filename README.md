@@ -1,27 +1,16 @@
 # go-starter
 
-A minimal Go service template with pinned linting, race-tested CI and cross-platform release builds.
+A minimal Go project structure with pinned linting, race-tested CI and cross-platform release builds.
 
-New to Go? Read [docs/go-beginners-guide.md](docs/go-beginners-guide.md) first; it explains the modules, commands and tools this template uses.
+Also contains personal notes not for inclusion in projects such as [docs/go-beginners-guide.md](docs/go-beginners-guide.md) which explains the modules, commands and tools this template uses.
 
 ## 1. Install the tools
 
 You need **Go 1.26+**, **make**, **git** and **curl**. Everything else (golangci-lint, govulncheck) is fetched automatically at pinned versions by the Makefile.
 
-| Platform | Command |
-| --- | --- |
-| macOS | `brew install go` (make, git and curl come with Xcode Command Line Tools: `xcode-select --install`) |
-| Linux | Download the tarball from [go.dev/dl](https://go.dev/dl), then `sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.*.linux-amd64.tar.gz`. Install the rest with your package manager, e.g. `sudo apt install make git curl`. Distro `golang` packages are usually too old. |
-| Windows | Use WSL (Ubuntu) and follow the Linux steps. Native Windows works for `go` commands, but the Makefile assumes a Unix shell. |
+Install and  put Go's binaries on your `PATH` as well as `/usr/local/go/bin` and `GOPATH`
 
-Then put Go's binaries on your `PATH` and check:
-
-```bash
-export PATH="$PATH:/usr/local/go/bin:$(go env GOPATH)/bin"   # add to ~/.bashrc or ~/.zshrc
-go version   # go1.26 or newer
-```
-
-**Editor:** install the Go extension for VS Code (or configure `gopls` in Neovim/Zed). It installs `gopls`, which gives you completion and shows vet and lint problems as you type. GoLand works out of the box.
+**Editor:** install and configure `gopls`
 
 ## 2. Set up the project
 
@@ -30,7 +19,7 @@ go version   # go1.26 or newer
 git clone https://github.com/<you>/<repo>.git && cd <repo>
 
 # 2. Replace the placeholder module path (macOS: use sed -i '')
-grep -rl 'github.com/your-org/go-starter' . | xargs sed -i 's#github.com/your-org/go-starter#github.com/<you>/<repo>#g'
+grep -rl 'github.com/org/repo' . | xargs sed -i 's#github.com/org/repo#github.com/<you>/<repo>#g'
 
 # 3. Download the pinned linter and run every check
 make tools
