@@ -2,7 +2,7 @@
 
 A minimal Go project structure with pinned linting, race-tested CI and cross-platform release builds.
 
-Also contains personal notes not for inclusion in projects such as [docs/go-beginners-guide.md](docs/go-beginners-guide.md) which explains the modules, commands and tools this template uses.
+Also contains personal notes not for inclusion in projects such as [notes/go-beginners-guide.md](notes/go-beginners-guide.md) which explains the modules, commands and tools this template uses.
 
 ## 1. Install the tools
 
