@@ -1,0 +1,99 @@
+name: Build
+
+# Snapshot builds on every push to main; a GitHub Release on every v* tag.
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # On tags, re-run the full CI suite first so a release can never ship unchecked code.
+  # On main, ci.yml already runs from its own push trigger, so this is skipped.
+  checks:
+    if: startsWith(github.ref, 'refs/tags/v')
+    uses: ./.github/workflows/ci.yml
+
+  build:
+    name: Build ${{ matrix.goos }}/${{ matrix.goarch }}
+    needs: checks
+    # Run when checks passed, or were skipped (non-tag builds).
+    if: ${{ !cancelled() && (needs.checks.result == 'success' || needs.checks.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { goos: linux,   goarch: amd64 }
+          - { goos: linux,   goarch: arm64 }
+          - { goos: darwin,  goarch: amd64 }
+          - { goos: darwin,  goarch: arm64 }
+          - { goos: windows, goarch: amd64 }
+    env:
+      BINARY: server
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # full history + tags so `git describe` yields a real version
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - name: Build
+        id: build
+        run: |
+          ext=""
+          [ "${{ matrix.goos }}" = "windows" ] && ext=".exe"
+          out="dist/${BINARY}${ext}"
+          make build GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} OUT="$out"
+          echo "version=$(git describe --tags --always --dirty)" >> "$GITHUB_OUTPUT"
+
+      - name: Package
+        id: package
+        run: |
+          name="${BINARY}_${{ steps.build.outputs.version }}_${{ matrix.goos }}_${{ matrix.goarch }}"
+          cp README.md dist/
+          cd dist
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            archive="${name}.zip"
+            zip -q "$archive" "${BINARY}.exe" README.md
+          else
+            archive="${name}.tar.gz"
+            tar -czf "$archive" "${BINARY}" README.md
+          fi
+          echo "archive=dist/${archive}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.goos }}-${{ matrix.goarch }}
+          path: ${{ steps.package.outputs.archive }}
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: Publish release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the release and upload assets
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Checksums
+        working-directory: dist
+        run: sha256sum * > checksums.txt
+
+      - uses: softprops/action-gh-release@v3
+        with:
+          files: dist/*
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }} # e.g. v1.2.0-rc.1
+          fail_on_unmatched_files: true
